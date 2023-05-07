@@ -19,6 +19,7 @@ func InitRouter() *gin.Engine {
 
 	userCollection := database.GetMongoClient().Database("db").Collection("users")
 	userController := &controllers.UserController{Collection: userCollection}
+	UserRouter(router, userController)
 	AuthRouter(router, userController)
 
 	return router
