@@ -111,8 +111,8 @@ func (c *UserController) UpdateDisplayName(ctx *gin.Context) {
 // UpdatePassword is a function that updates a user's password in the database
 func (c *UserController) UpdatePassword(ctx *gin.Context) {
 	var body struct {
-		Username    string
-		NewPassword string
+		Username string
+		Password string
 	}
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
@@ -122,7 +122,7 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 		return
 	}
 
-	if body.Username == "" || body.NewPassword == "" {
+	if body.Username == "" || body.Password == "" {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Missing required fields",
 		})
@@ -137,8 +137,16 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 		return
 	}
 
+	salt, password, err := HashPassword(body.Password)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
 	filter := bson.M{"username": username}
-	update := bson.M{"$set": bson.M{"password": body.NewPassword}}
+	update := bson.M{"$set": bson.M{"salt": salt, "password": password}}
 
 	result, err := c.Collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
