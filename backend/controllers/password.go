@@ -6,13 +6,18 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"os"
+	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 // HashPassword takes a plain text password and returns a salted hash
-func HashPassword(password string) (string, string) {
+func HashPassword(password string) (string, string, error) {
 	// Generate a random salt
 	salt := make([]byte, 16)
-	rand.Read(salt)
+	if _, err := rand.Read(salt); err != nil {
+		return "", "", err
+	}
 
 	// Hash the password and salt using SHA-256
 	hash := sha256.Sum256([]byte(string(salt) + password + os.Getenv("PEPPER")))
@@ -22,7 +27,7 @@ func HashPassword(password string) (string, string) {
 	hashStr := base64.StdEncoding.EncodeToString(hash[:])
 
 	// Return the salt and salted hash
-	return saltStr, hashStr
+	return saltStr, hashStr, nil
 }
 
 func VerifyPassword(password string, salt string, saltedHash string) bool {
@@ -42,4 +47,26 @@ func VerifyPassword(password string, salt string, saltedHash string) bool {
 
 	// Compare the hashes
 	return bytes.Equal(hash[:], hashBytes)
+}
+
+func GenerateToken(username string) (string, error) {
+	// Set the expiration time for the token
+	expirationTime := time.Now().Add(24 * time.Hour).Unix()
+
+	// Create the claims for the token
+	claims := jwt.MapClaims{
+		"username": username,
+		"exp":      expirationTime,
+	}
+
+	// Create the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign the token with the secret key
+	signedToken, err := token.SignedString([]byte(os.Getenv("JWT_SECRET_KEY")))
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
 }
