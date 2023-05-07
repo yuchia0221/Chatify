@@ -114,7 +114,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	user.Username = body.Username
+	user.Username, user.DisplayName = body.Username, body.DisplayName
 	user.Salt, user.Password, err = HashPassword(body.Password)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
