@@ -11,12 +11,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (c *UserController) Login(ctx *gin.Context) {
-	var body struct {
-		Username string
-		Password string
-	}
+type LoginReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
+type RegisterReq struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+	Password    string `json:"password"`
+}
+
+func (c *UserController) Login(ctx *gin.Context) {
+	var body LoginReq
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
@@ -81,11 +88,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 }
 
 func (c *UserController) Register(ctx *gin.Context) {
-	var body struct {
-		Username    string
-		DisplayName string
-		Password    string
-	}
+	var body RegisterReq
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",

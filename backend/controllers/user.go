@@ -16,6 +16,16 @@ type UserController struct {
 	Collection *mongo.Collection
 }
 
+type UpdateDisplayNameReq struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"display_name"`
+}
+
+type UpdatePasswordReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // GetUser is a function that gets a user's display name from the database
 func (c *UserController) GetUser(ctx *gin.Context) {
 	username := ctx.Query("username")
@@ -58,11 +68,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 
 // UpdateDisplayName is a function that updates a user's display name in the database
 func (c *UserController) UpdateDisplayName(ctx *gin.Context) {
-	var body struct {
-		Username    string
-		DisplayName string
-	}
-
+	var body UpdateDisplayNameReq
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
@@ -110,11 +116,7 @@ func (c *UserController) UpdateDisplayName(ctx *gin.Context) {
 
 // UpdatePassword is a function that updates a user's password in the database
 func (c *UserController) UpdatePassword(ctx *gin.Context) {
-	var body struct {
-		Username string
-		Password string
-	}
-
+	var body UpdatePasswordReq
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
