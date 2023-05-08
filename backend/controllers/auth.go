@@ -41,7 +41,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 	filter := bson.M{"username": body.Username}
 	var user models.User
 
-	err := c.Collection.FindOne(context.Background(), filter).Decode(&user)
+	err := c.User.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
@@ -109,7 +109,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 
 	var user models.User
 	filter := bson.M{"username": body.Username}
-	err := c.Collection.FindOne(context.Background(), filter).Decode(&user)
+	err := c.User.FindOne(context.Background(), filter).Decode(&user)
 	if err == nil {
 		ctx.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"error": "User already exists",
@@ -126,7 +126,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	result, err := c.Collection.InsertOne(context.Background(), user)
+	result, err := c.User.InsertOne(context.Background(), user)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create user",

@@ -13,7 +13,7 @@ import (
 // UserController is a struct that holds the necessary information
 // to interact with the user model
 type UserController struct {
-	Collection *mongo.Collection
+	User *mongo.Collection
 }
 
 type UpdateDisplayNameReq struct {
@@ -26,6 +26,12 @@ type UpdatePasswordReq struct {
 	Password string `json:"password"`
 }
 
+func NewUserController(UserCollection *mongo.Collection) *UserController {
+	return &UserController{
+		User: UserCollection,
+	}
+}
+
 // GetUser is a function that gets a user's display name from the database
 func (c *UserController) GetUser(ctx *gin.Context) {
 	username := ctx.Query("username")
@@ -33,18 +39,11 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 		username = ctx.MustGet("username").(string)
 	}
 
-	if username == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "Missing required fields",
-		})
-		return
-	}
-
 	filter := bson.M{"username": username}
 
 	var user models.User
 
-	err := c.Collection.FindOne(context.Background(), filter).Decode(&user)
+	err := c.User.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
@@ -95,7 +94,7 @@ func (c *UserController) UpdateDisplayName(ctx *gin.Context) {
 	filter := bson.M{"username": username}
 	update := bson.M{"$set": bson.M{"display_name": body.DisplayName}}
 
-	result, err := c.Collection.UpdateOne(context.Background(), filter, update)
+	result, err := c.User.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update user document",
@@ -150,7 +149,7 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 	filter := bson.M{"username": username}
 	update := bson.M{"$set": bson.M{"salt": salt, "password": password}}
 
-	result, err := c.Collection.UpdateOne(context.Background(), filter, update)
+	result, err := c.User.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to update user document",
@@ -172,16 +171,10 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 
 // DeleteUser is a function that deletes a user from the database
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-	username, ok := ctx.MustGet("username").(string)
-	if !ok {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get username from context",
-		})
-		return
-	}
+	username := ctx.MustGet("username").(string)
 
 	filter := bson.M{"username": username}
-	result, err := c.Collection.DeleteOne(context.Background(), filter)
+	result, err := c.User.DeleteOne(context.Background(), filter)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete user document",

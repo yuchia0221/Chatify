@@ -31,3 +31,8 @@ func InitMongoDB() {
 func GetMongoClient() *mongo.Client {
 	return client
 }
+
+func GetMongoCollection(db string, c string) *mongo.Collection {
+	collection := client.Database(db).Collection(c)
+	return collection
+}
