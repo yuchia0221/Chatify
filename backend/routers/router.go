@@ -7,12 +7,15 @@ import (
 	"github.com/yuchia0221/Chatify/controllers"
 	"github.com/yuchia0221/Chatify/controllers/websocket"
 	"github.com/yuchia0221/Chatify/database"
+	"github.com/yuchia0221/Chatify/middlewares"
 	"github.com/yuchia0221/Chatify/models"
 )
 
 // InitRouter initializes the gin router and registers the routes
 func InitRouter(hub *models.Hub) *gin.Engine {
 	router := gin.Default()
+
+	router.Use(middlewares.CORSMiddleware())
 
 	// Define the routes
 	router.GET("/ping", func(c *gin.Context) {
