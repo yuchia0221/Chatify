@@ -298,3 +298,55 @@ func (h *HubController) GetAllClientsInRoom(ctx *gin.Context) {
 		"clients": room.Clients,
 	})
 }
+
+// get all messages in a room
+func (h *HubController) GetAllMessagesInRoom(ctx *gin.Context) {
+	roomID := ctx.Param("roomId")
+	if roomID == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "Missing required fields",
+		})
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid room id",
+		})
+		return
+	}
+
+	var messages []models.Message
+	filter := bson.M{"room_id": id}
+	cursor, err := h.Message.Find(context.Background(), filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"error": "Room not found",
+			})
+			return
+		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to query database",
+		})
+		return
+	}
+
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var message models.MessageData
+		cursor.Decode(&message)
+		messages = append(messages, models.Message{
+			Content:  message.Content,
+			RoomID:   roomID,
+			Username: message.Username,
+			SendTime: message.SendTime,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"messages": messages,
+	})
+}
