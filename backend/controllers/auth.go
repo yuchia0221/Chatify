@@ -84,7 +84,9 @@ func (c *UserController) Login(ctx *gin.Context) {
 	})
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"message": "Successfully logged in",
+		"username":     user.Username,
+		"display_name": user.DisplayName,
+		"message":      "Successfully logged in",
 	})
 }
 
@@ -113,7 +115,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	err := c.User.FindOne(context.Background(), filter).Decode(&user)
 	if err == nil {
 		ctx.AbortWithStatusJSON(http.StatusConflict, gin.H{
-			"error": "User already exists",
+			"error": "User already exists. Try another username!",
 		})
 		return
 	}
