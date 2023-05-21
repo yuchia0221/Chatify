@@ -15,10 +15,10 @@ type Client struct {
 }
 
 type Message struct {
-	Content  string
-	RoomID   string
-	Username string
-	SendTime time.Time
+	Content  string    `json:"content"`
+	RoomID   string    `json:"room_id"`
+	Username string    `json:"username"`
+	SendTime time.Time `json:"send_time"`
 }
 
 type MessageData struct {
