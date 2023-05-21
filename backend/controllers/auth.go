@@ -80,6 +80,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
 	})
 
 	ctx.JSON(http.StatusOK, gin.H{
