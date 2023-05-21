@@ -25,8 +25,9 @@ type CreateRoomReq struct {
 }
 
 type RoomRes struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	ClientNum int    `json:"client_num"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -242,7 +243,7 @@ func (h *HubController) GetAllRooms(ctx *gin.Context) {
 		for cursor.Next(context.Background()) {
 			var room models.RoomData
 			cursor.Decode(&room)
-			rooms = append(rooms, RoomRes{ID: room.ID.Hex(), Name: room.Name})
+			rooms = append(rooms, RoomRes{ID: room.ID.Hex(), Name: room.Name, ClientNum: len(room.Clients)})
 		}
 	}
 
@@ -295,5 +296,57 @@ func (h *HubController) GetAllClientsInRoom(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"clients": room.Clients,
+	})
+}
+
+// get all messages in a room
+func (h *HubController) GetAllMessagesInRoom(ctx *gin.Context) {
+	roomID := ctx.Param("roomId")
+	if roomID == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "Missing required fields",
+		})
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid room id",
+		})
+		return
+	}
+
+	var messages []models.Message
+	filter := bson.M{"room_id": id}
+	cursor, err := h.Message.Find(context.Background(), filter)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+				"error": "Room not found",
+			})
+			return
+		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to query database",
+		})
+		return
+	}
+
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var message models.MessageData
+		cursor.Decode(&message)
+		messages = append(messages, models.Message{
+			Content:  message.Content,
+			RoomID:   roomID,
+			Username: message.Username,
+			SendTime: message.SendTime,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"messages": messages,
 	})
 }

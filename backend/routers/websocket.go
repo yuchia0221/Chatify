@@ -15,5 +15,6 @@ func WebSocketRouter(router *gin.Engine, hubController *websocket.HubController)
 		websocketGroup.DELETE("/room/:roomId", hubController.LeaveRoom)
 		websocketGroup.GET("/joinRoom/:roomId", hubController.JoinRoom)
 		websocketGroup.GET("/rooms", hubController.GetAllRooms)
+		websocketGroup.GET("/messages/:roomId", hubController.GetAllMessagesInRoom)
 	}
 }
