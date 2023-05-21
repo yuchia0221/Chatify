@@ -25,8 +25,9 @@ type CreateRoomReq struct {
 }
 
 type RoomRes struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	ClientNum int    `json:"client_num"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -242,7 +243,7 @@ func (h *HubController) GetAllRooms(ctx *gin.Context) {
 		for cursor.Next(context.Background()) {
 			var room models.RoomData
 			cursor.Decode(&room)
-			rooms = append(rooms, RoomRes{ID: room.ID.Hex(), Name: room.Name})
+			rooms = append(rooms, RoomRes{ID: room.ID.Hex(), Name: room.Name, ClientNum: len(room.Clients)})
 		}
 	}
 
